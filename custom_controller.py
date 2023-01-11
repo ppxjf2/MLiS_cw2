@@ -13,6 +13,7 @@ class CustomController(FlightController):
         self.kx = 0.5
         self.abs_pitch_delta = 0.1
         self.abs_thrust_delta = 0.3
+        self.h = 1
         self.h1 = 1
         self.h2 = 1
         self.h3 = 1
@@ -25,18 +26,14 @@ class CustomController(FlightController):
         return 3000 # You can alter the amount of steps you want your program to run for here
 
     def a(self, x):
-        i = x - self.h1
+        i = x - self.h
         return (1 - sigmoid(i))
 
     def b(self, x):
-        i = x + self.h1
+        i = x + self.h
         return sigmoid(i)
 
-    def get_thrusts(self, drone: Drone):
-
-        self.states = []
-        self.actions = []
-        self.rewards = []
+    def get_thrusts(self, drone: Drone) -> Tuple[float, float]:
 
         target_point = drone.get_next_target()
         dx = target_point[0] - drone.x
@@ -72,7 +69,7 @@ class CustomController(FlightController):
             thrust_right = 0
 
         # State
-        state = (delta_pitch, drone.pitch, dx, dy, velocity)
+        state = (drone.pitch_velocity, drone.pitch, dx, dy, velocity)
         self.states.append(state)
 
         # Action
@@ -80,7 +77,7 @@ class CustomController(FlightController):
         self.actions.append(action)
 
         # Reward
-        S = self.h1 * (-np.square(velocity - self.h2) - (self.h3*(np.square(delta_pitch))) - (self.h4*(drone.pitch)))
+        S = (self.h1 * (-np.square(velocity - self.h2))) - (self.h3*(np.square(delta_pitch))) - (self.h4*(drone.pitch))
         reward = self.a(distance) + self.b(S)
         self.rewards.append(reward)
 
