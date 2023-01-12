@@ -27,7 +27,6 @@ class CustomController(FlightController):
        
         if (np.random.rand() > 0.9):
             return np.random.randint(0,4)
-
         else:   
             max = max(self.value_function[state[0]][state[1]][state[2]])
         
