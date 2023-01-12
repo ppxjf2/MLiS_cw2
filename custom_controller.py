@@ -21,6 +21,20 @@ class CustomController(FlightController):
         self.states = []
         self.actions = []
         self.rewards = []
+        self.value_function = np.zeros((20,20,20,5))
+
+    def value_calc(self, state):
+       
+        if (np.random.rand() > 0.9):
+            return np.random.randint(0,4)
+
+        else:   
+            max = max(self.value_function[state[0]][state[1]][state[2]])
+        
+            for n in range(5):
+                if(max == self.value_function[state[0]][state[1]][state[2]][n]):
+                    i=n
+                return i
 
     def get_max_simulation_steps(self):
         return 3000 # You can alter the amount of steps you want your program to run for here
@@ -52,13 +66,14 @@ class CustomController(FlightController):
             thrust_left = np.clip(0.5 + thrust_adj + delta_pitch, 0.0, 1.0)
             thrust_right = np.clip(0.5 + thrust_adj - delta_pitch, 0.0, 1.0)
         elif:
-            # Left
-            thrust_left = 1
-            thrust_right = 0
-        elif:
-            # Right
-            thrust_left = 0
-            thrust_right = 1
+            if -:
+                # Left
+                thrust_left = 1
+                thrust_right = 0
+            elif +:
+                # Right
+                thrust_left = 0
+                thrust_right = 1
         elif: 
             # Both on
             thrust_left = 1
