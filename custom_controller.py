@@ -18,7 +18,7 @@ class CustomController(FlightController):
         self.kx = 0.5
         self.abs_pitch_delta = 0.1
         self.abs_thrust_delta = 0.3
-        self.h1 = 0.05
+        self.h1 = 0.1
         self.states = []
         self.actions = []
         self.rewards = []
@@ -33,14 +33,14 @@ class CustomController(FlightController):
             return np.random.randint(0,4)
         else:   
             max1 = max(self.value_function[state[0]][state[1]][state[2]])
-        
+            i = 0
             for n in range(5):
                 if(max1 == self.value_function[state[0]][state[1]][state[2]][n]):
                     i=n
-                return i
+            return i
 
     def get_max_simulation_steps(self):
-        return 3000 # You can alter the amount of steps you want your program to run for here
+        return 500 # You can alter the amount of steps you want your program to run for here
 
     def reward(self, drone: Drone):
 
@@ -71,7 +71,7 @@ class CustomController(FlightController):
 
         multiplier =  velocity_multiplier*angle_multiplier* rotational_multiplier
 
-        reward = -dist + ontarget*(10*multiplier)
+        reward = -dist + ontarget*(200*multiplier)
         return reward
 
     def get_thrusts(self, drone: Drone) -> Tuple[float, float]:
@@ -147,11 +147,15 @@ class CustomController(FlightController):
     def train(self):
         """A self contained method designed to train parameters created in the initialiser."""
 
-        epochs = 1
+        epochs = 10000
         # --- Code snipped provided for guidance only --- #
         for n in range(epochs):
             # 1) modify parameters
-            states, actions, rewards = self.states, self.actions, self.rewards
+            
+            self.states = []
+            self.actions = []
+            self.rewards = []
+
 
             # 2) create a new drone simulation
             drone = self.init_drone()
@@ -161,13 +165,16 @@ class CustomController(FlightController):
                 drone.set_thrust(self.state_machine(drone))
                 drone.step_simulation(self.get_time_interval())
 
+            states, actions, rewards = self.states, self.actions, self.rewards
+
             # 4) measure change in quality
-            total_new_rewards = np.sum(self.rewards)
+            total_new_rewards = np.sum(rewards)
+            print(total_new_rewards)
             # 5) update parameters according to algorithm
 
             for i in range(len(actions)):
                 cur_reward = self.value_function[states[i][0]][states[i][1]][states[i][2]][actions[i]]
                 new_reward = (cur_reward + total_new_rewards) / 2
-
+                
                 self.value_function[states[i][0]][states[i][1]][states[i][2]][actions[i]] = new_reward
         pass
