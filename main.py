@@ -11,11 +11,11 @@ from heuristic_controller import HeuristicController
 from custom_controller import CustomController
 
 def generate_controller() -> FlightController:
-    return HeuristicController() # <--- Replace this with your own written controller
-    # return CustomController()
+    #return HeuristicController() # <--- Replace this with your own written controller
+    return CustomController()
 
 def is_training() -> bool:
-    return False # <--- Replace this with True if you want to train, false otherwise
+    return True # <--- Replace this with True if you want to train, false otherwise
 def is_saving() -> bool:
     return False # <--- Replace this with True if you want to save the results of training, false otherwise
 
@@ -88,9 +88,7 @@ def main(controller: FlightController):
 
         # Makes sure that the simulation runs at a target 60FPS
         clock.tick(60)
-
         # Checks whether to reset the current drone
-        simulation_step_counter+=1
         if (simulation_step_counter>max_simulation_steps):
             drone = controller.init_drone() # Reset the drone
             simulation_step_counter = 0
