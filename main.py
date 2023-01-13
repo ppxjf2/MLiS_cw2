@@ -88,7 +88,9 @@ def main(controller: FlightController):
 
         # Makes sure that the simulation runs at a target 60FPS
         clock.tick(60)
+
         # Checks whether to reset the current drone
+        simulation_step_counter+=1
         if (simulation_step_counter>max_simulation_steps):
             drone = controller.init_drone() # Reset the drone
             simulation_step_counter = 0
