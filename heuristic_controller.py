@@ -35,6 +35,8 @@ class HeuristicController(FlightController):
         dx = target_point[0] - drone.x
         dy = target_point[1] - drone.y
 
+        print(drone.pitch)
+
         thrust_adj = np.clip(dy * self.ky, -self.abs_thrust_delta, self.abs_thrust_delta)
         target_pitch = np.clip(dx * self.kx, -self.abs_pitch_delta, self.abs_pitch_delta)
         delta_pitch = target_pitch-drone.pitch
@@ -49,18 +51,21 @@ class HeuristicController(FlightController):
         """A self contained method designed to train parameters created in the initialiser.
         """
         # --- Code snipped provided for guidance only --- #
-        # for n in range(epochs):
-        #     # 1) modify parameters
+        for n in range(10):
+            # 1) modify parameters
             
-        #     # 2) create a new drone simulation
-        #     drone = self.init_drone()
-        #     # 3) run simulation
-        #     for t in range(self.get_max_simulation_steps()):
-        #         drone.set_thrust(self.get_thrusts(drone))
-        #         drone.step_simulation(self.get_time_interval())
-        #     # 4) measure change in quality
+            # 2) create a new drone simulation
+            drone = self.init_drone()
+            # 3) run simulation
+            
+            for t in range(self.get_max_simulation_steps()):
+                print(drone.pitch)
 
-        #     # 5) update parameters according to algorithm
+                drone.set_thrust(self.get_thrusts(drone))
+                drone.step_simulation(self.get_time_interval())
+            # 4) measure change in quality
+
+            # 5) update parameters according to algorithm
 
         pass
 

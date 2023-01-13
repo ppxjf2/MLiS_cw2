@@ -17,7 +17,7 @@ def generate_controller() -> FlightController:
 def is_training() -> bool:
     return True # <--- Replace this with True if you want to train, false otherwise
 def is_saving() -> bool:
-    return False # <--- Replace this with True if you want to save the results of training, false otherwise
+    return True # <--- Replace this with True if you want to save the results of training, false otherwise
 
 #---------------------------------------------------------------------#
 SCREEN_WIDTH = 720
