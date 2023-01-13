@@ -18,18 +18,18 @@ class CustomController(FlightController):
         self.kx = 0.5
         self.abs_pitch_delta = 0.1
         self.abs_thrust_delta = 0.3
-        self.h1 = 0.1
+        self.h1 = 0.105
         self.states = []
         self.actions = []
         self.rewards = []
         self.action = 0
-        values= np.zeros([20,20,20,20])
+        values= np.empty([20,40,40,5]); values.fill(0)
         #actions = (np.array([1,-1,-2,-3,-4]))
         #values = [values,actions]
         self.value_function = values
 
     def value_calc(self, state):
-        if (np.random.rand() > 0.9):
+        if (np.random.rand() > 0.97):
             return np.random.randint(0,4)
         else:   
             max1 = max(self.value_function[state[0]][state[1]][state[2]])
@@ -40,7 +40,7 @@ class CustomController(FlightController):
             return i
 
     def get_max_simulation_steps(self):
-        return 500 # You can alter the amount of steps you want your program to run for here
+        return 800 # You can alter the amount of steps you want your program to run for here
 
     def reward(self, drone: Drone):
 
@@ -60,18 +60,18 @@ class CustomController(FlightController):
         if velocity < 0.05:
             velocity_multiplier = 0
         else:
-            velocity_multiplier= clamp(-10*(velocity-0.1)**2+1 ,0,1)
+            velocity_multiplier= clamp(-2*(velocity-0.1)**2+1 ,0.1,1)
 
         if drone.pitch == 0:
             angle_multiplier = 1
         else:
-            angle_multiplier= clamp(-log(30*abs(drone.pitch)) ,0,1)
+            angle_multiplier= clamp(-log(30*abs(drone.pitch)) ,0.1,1)
         
-        rotational_multiplier = clamp( -(drone.pitch_velocity/20)**2+1,0,1)
+        rotational_multiplier = clamp( -(drone.pitch_velocity/20)**2+1,0.1,1)
 
         multiplier =  velocity_multiplier*angle_multiplier* rotational_multiplier
 
-        reward = -dist + ontarget*(200*multiplier)
+        reward = -dist + ontarget*(100*multiplier)+ ontarget*10
         return reward
 
     def get_thrusts(self, drone: Drone) -> Tuple[float, float]:
@@ -79,30 +79,46 @@ class CustomController(FlightController):
         dx = target_point[0] - drone.x
         dy = target_point[1] - drone.y
 
-        thrust_adj = np.clip(dy * self.ky, -self.abs_thrust_delta, self.abs_thrust_delta)
-        target_pitch = np.clip(dx * self.kx, -self.abs_pitch_delta, self.abs_pitch_delta)
-        delta_pitch = target_pitch - drone.pitch
+
 
         if(self.action == 0):        
             # Current
+            thrust_adj = np.clip(dy * self.ky, -self.abs_thrust_delta, self.abs_thrust_delta)
+            target_pitch = np.clip(dx * self.kx, -self.abs_pitch_delta, self.abs_pitch_delta)
+            delta_pitch = target_pitch - drone.pitch
+
             thrust_left = np.clip(0.5 + thrust_adj + delta_pitch, 0.0, 1.0)
             thrust_right = np.clip(0.5 + thrust_adj - delta_pitch, 0.0, 1.0)
         elif(self.action == 1):
             # Left
-            thrust_left = 1
-            thrust_right = 0
+
+            thrust_adj = np.clip(dy * self.ky, -self.abs_thrust_delta, self.abs_thrust_delta)
+            target_pitch = np.clip(dx * self.kx, -self.abs_pitch_delta, self.abs_pitch_delta)
+            delta_pitch = target_pitch - drone.pitch
+
+            thrust_left = np.clip(0.6 + thrust_adj + delta_pitch, 0.1, 1.0)
+            thrust_right = np.clip(0.4 + thrust_adj - delta_pitch, 0.0, 0.9)
         elif(self.action == 2):
             # Right
-            thrust_left = 0
-            thrust_right = 1
+
+            thrust_adj = np.clip(dy * self.ky, -self.abs_thrust_delta, self.abs_thrust_delta)
+            target_pitch = np.clip(dx * self.kx, -self.abs_pitch_delta, self.abs_pitch_delta)
+            delta_pitch = target_pitch - drone.pitch
+
+            thrust_left = np.clip(0.4 + thrust_adj + delta_pitch, 0.0, 0.9)
+            thrust_right = np.clip(0.6 + thrust_adj - delta_pitch, 0.1, 1.0)
         elif(self.action == 3): 
             # Both on
-            thrust_left = 1
-            thrust_right = 1
+            thrust_adj = np.clip(dy * self.ky, -self.abs_thrust_delta, self.abs_thrust_delta)
+            target_pitch = np.clip(dx * self.kx, -self.abs_pitch_delta, self.abs_pitch_delta)
+            delta_pitch = (target_pitch - drone.pitch)*2
+
+            thrust_left = np.clip(0.5 + thrust_adj + delta_pitch, 0.0, 1.0)
+            thrust_right = np.clip(0.5 + thrust_adj - delta_pitch, 0.0, 1.0)
         elif(self.action == 4):
             # Both off
             thrust_left = 0
-            thrust_right = 1
+            thrust_right = 0
 
         return (thrust_left, thrust_right)
 
@@ -119,9 +135,9 @@ class CustomController(FlightController):
 
         # State
         state = (
-            (int(drone.pitch/10)%20)-10,
-            (int(dx*10)%20)-10,
-            (int(dy*10)%20)-10
+            (int(drone.pitch/10)%20)-20,
+            (int(dx*10)%40)-20,
+            (int(dy*10)%40)-20
         )
         self.states.append(state)
 
@@ -147,7 +163,7 @@ class CustomController(FlightController):
     def train(self):
         """A self contained method designed to train parameters created in the initialiser."""
 
-        epochs = 10000
+        epochs = 600
         # --- Code snipped provided for guidance only --- #
         for n in range(epochs):
             # 1) modify parameters
@@ -164,17 +180,23 @@ class CustomController(FlightController):
             for t in range(self.get_max_simulation_steps()):
                 drone.set_thrust(self.state_machine(drone))
                 drone.step_simulation(self.get_time_interval())
-
+            #print(self.states)
             states, actions, rewards = self.states, self.actions, self.rewards
 
             # 4) measure change in quality
-            total_new_rewards = np.sum(rewards)
-            print(total_new_rewards)
+            total_new_rewardsblob = np.sum(rewards)
+            print(total_new_rewardsblob)
             # 5) update parameters according to algorithm
 
             for i in range(len(actions)):
+                total_new_rewards = np.sum(rewards[i:])
                 cur_reward = self.value_function[states[i][0]][states[i][1]][states[i][2]][actions[i]]
-                new_reward = (cur_reward + total_new_rewards) / 2
+               
+                if (total_new_rewards>cur_reward):
+                    new_reward=  total_new_rewards
+                    
+                else:
+                    new_reward = (9*cur_reward + total_new_rewards)/ 10
                 
                 self.value_function[states[i][0]][states[i][1]][states[i][2]][actions[i]] = new_reward
         pass
