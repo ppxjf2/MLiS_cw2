@@ -73,7 +73,7 @@ def main(controller: FlightController):
         drone.set_thrust(controller.get_thrusts(drone))
         # Update the simulation
         drone.step_simulation(delta_time)
-
+                              
         # --- Begin Drawing --- #
 
         # Refresh the background
