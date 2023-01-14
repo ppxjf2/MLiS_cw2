@@ -11,7 +11,7 @@ def sigmoid(x):
 def clamp(n, minn, maxn):
     return max(min(maxn, n), minn)
 
-pos_actions=4
+pos_actions=5
 
 class CustomController(FlightController):
 
@@ -29,7 +29,8 @@ class CustomController(FlightController):
         self.nexttarget = [0,0]
         self.counter = 1
 
-        values= np.empty([20,30,30,10,pos_actions]); values.fill(13300)
+        values= np.random.random([20,40,30,10,pos_actions]); 
+        values+= 100000
         #actions = (np.array([1,-1,-2,-3,-4]))
         #values = [values,actions]
         self.value_function = values
@@ -46,7 +47,7 @@ class CustomController(FlightController):
             return i
 
     def get_max_simulation_steps(self):
-        return 1500 # You can alter the amount of steps you want your program to run for here
+        return 3000 # You can alter the amount of steps you want your program to run for here
 
     def reward(self, drone: Drone):
 
@@ -62,28 +63,29 @@ class CustomController(FlightController):
         else:
             ontarget = False
 
-        if abs(drone.velocity_x) < 0.1 or drone.velocity_y == 0 :
-            velocity_multiplier = 0
-        else:
-            velocity_multiplier= 2*clamp(-2*(velocity-0.2)**2+1 ,0.3,1)
+        # if abs(drone.velocity_x) < 0.1 :
+        #     velocity_multiplier = 0
+        # else:
+        #     velocity_multiplier= clamp(-2*(velocity-0.1)**2+1 ,0.3,1)
 
         if drone.pitch == 0:
-            angle_multiplier = 0.8
+            angle_multiplier = 0.2
         else:
-            angle_multiplier= clamp(-log(30*abs(drone.pitch)) ,0.1,1)
+            angle_multiplier= clamp(-0.8*log(abs(drone.pitch)) ,0.1,1)
         
         rotational_multiplier = clamp( -(drone.pitch_velocity/20)**2+1,0.1,1)
-        multiplier =  velocity_multiplier*angle_multiplier #*rotational_multiplier
+        multiplier =  angle_multiplier*angle_multiplier #*rotational_multiplier *velocity_multiplier
         wrongwaypunish= np.sign(dx*drone.pitch)
         wrongwaymulti= clamp(abs(drone.pitch),-1,0.05)
-        badboy= 5*floor(abs(drone.pitch))
+        badboy= 25*floor(abs(drone.pitch))
         #print(drone.pitch)
-        reward = -3*(dist) - badboy + 2*self.counter**2 # + wrongwaymulti*wrongwaypunish*5
-        
+        reward = -3*(dist) + 0.1*abs(drone.velocity_x) - badboy + 2*self.counter**3 # + wrongwaymulti*wrongwaypunish*5
+        #print (multiplier)
+        #print(ontarget)
         if (self.nexttarget!=drone.get_next_target()):
             self.nexttarget=drone.get_next_target()
             self.counter+=1
-            reward+= 200+multiplier
+            reward+= 2000+multiplier
         return reward
 
     def action_selection(self, drone: Drone) -> Tuple[float, float]:
@@ -97,8 +99,8 @@ class CustomController(FlightController):
             # Current
             
             if (np.sign(dx) == np.sign(drone.pitch)):
-                thrust_left = 0.55
-                thrust_right = 0.55
+                thrust_left = 0.5
+                thrust_right = 0.5
             else:
                 thrust_left = np.clip((np.sign(dx)/2)+1, 0.0, 1.0)
                 thrust_right =np.clip(-((np.sign(dx)/2)+1), 0.0, 1.0)
@@ -106,17 +108,26 @@ class CustomController(FlightController):
         elif(self.action == 1):
             thrust_adj = np.clip(dy * self.ky, -self.abs_thrust_delta, self.abs_thrust_delta)
             target_pitch = np.clip(dx * (self.kx), -self.abs_pitch_delta, self.abs_pitch_delta)
-            delta_pitch = (target_pitch - drone.pitch)/2
+            delta_pitch = (target_pitch - drone.pitch)*2
 
             thrust_left = np.clip(0.5 + thrust_adj + delta_pitch, 0.0, 1.0)
             thrust_right = np.clip(0.5 + thrust_adj - delta_pitch, 0.0, 1.0)
         elif(self.action == 2):
 
             isrightspin = np.sign(drone.pitch_velocity)
-            thrust_left = 0.6 - 0.4* isrightspin
-            thrust_right = 0.6 + 0.4* isrightspin
+            thrust_left = 0.5 - 0.4* isrightspin
+            thrust_right = 0.5 + 0.4* isrightspin
+            
 
-        elif(self.action==3):
+        elif(self.action == 3):
+            if (np.sign(drone.pitch_velocity)== np.sign(dx)):
+                thrust_left = np.clip(np.sign(dx), 0.4, 0.6)
+                thrust_right = np.clip(np.sign(dx), 0.4, 0.6)
+            else:
+                thrust_left = np.clip(np.sign(dx), 0.2, 0.8)
+                thrust_right = np.clip(np.sign(dx), 0.2, 0.8)
+
+        elif(self.action == 4):
             thrust_adj = np.clip(dy * self.ky, -self.abs_thrust_delta, self.abs_thrust_delta)
             target_pitch = np.clip(dx * self.kx, -self.abs_pitch_delta, self.abs_pitch_delta)
             delta_pitch = target_pitch - drone.pitch
@@ -140,7 +151,7 @@ class CustomController(FlightController):
         # State
         state = (
             int(((drone.pitch-1)*10)%20),
-            int(((dx-1.5)*10)%30),
+            int(((dx-1.5)*8)%40),
             int(((dy-1.5)*10)%30),
             int(np.sqrt(np.square(drone.velocity_x) + np.square(drone.velocity_y))*10)%10
         )
@@ -161,8 +172,9 @@ class CustomController(FlightController):
 
     def train(self):
         """A self contained method designed to train parameters created in the initialiser."""
-
-        epochs = 2000
+        self.values= np.random.random([20,40,30,10,pos_actions]); 
+        self.values+= 100000
+        epochs = 300
         # --- Code snipped provided for guidance only --- #
         for n in range(epochs):
             # 1) modify parameters
@@ -186,12 +198,13 @@ class CustomController(FlightController):
 
             # 4) measure change in quality
             total_new_rewardsblip = np.sum(rewards)
-            print(total_new_rewardsblip)
+            print(total_new_rewardsblip,self.counter)
             # 5) update parameters according to algorithm
 
             for i in reversed(range(len(actions))):
                 k= len(actions)-1
-                rewards[k-i] = np.average(rewards[(k-i):])
+                total_new_rewardsblip
+                rewards[k-i] = (4*np.average(rewards[(k-i):])+total_new_rewardsblip)/5
                 # next_reward=total_new_rewards
                 # if (k-(i-2)<k):
                 #     next_reward = (1/4)*(3*rewards[k-i+1]+rewards[k-i+2])
@@ -202,7 +215,7 @@ class CustomController(FlightController):
                 if (cur_reward>rewards[k-i]):
                     new_reward= (19*cur_reward + rewards[k-i])/20
                 else:
-                    new_reward= (4*cur_reward + rewards[k-i])/5
+                    new_reward= (1*cur_reward + rewards[k-i])/5
                 self.value_function[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] = new_reward
 
             # for i in range(len(actions)):
