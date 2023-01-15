@@ -167,7 +167,7 @@ class CustomController(FlightController):
         """A self contained method designed to train parameters created in the initialiser."""
         self.values= np.random.random([20,40,30,10,pos_actions]); 
         self.values+= 100000
-        epochs = 300
+        epochs = 200
         average_returns = np.empty([20,40,30,10,pos_actions])
         average_returns_count = np.zeros([20,40,30,10,pos_actions])
         Q = np.empty([20,40,30,10,pos_actions])
@@ -200,19 +200,12 @@ class CustomController(FlightController):
             for i in reversed(range(len(actions))):
                 k= len(actions)-1
                 total_new_rewardsblip
-                rewards[k-i] = (4*np.average(rewards[(k-i):])+total_new_rewardsblip)/5
-                
+                G = np.average(rewards[(k-i):])
+                #OPTION- MAKE THE END OF THE PATH HAVE BIGGER EFFECT replace previous with
+                #rewards[k-i]=np.average(rewards[(k-i):])
+                #G=rewards[k-i]
                 cur_reward = self.value_function[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]]
 
-                
-
-                # if (cur_reward>rewards[k-i]):
-                #     new_reward = (19*cur_reward + rewards[k-i])/20
-                # else:
-                #     new_reward = (1*cur_reward + rewards[k-i])/5
-                # self.value_function[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] = new_reward
-
-                G = G + rewards[k-1]
 
                 average_returns[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] += G
                 average_returns_count[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] += 1
