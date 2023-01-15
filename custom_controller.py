@@ -168,9 +168,9 @@ class CustomController(FlightController):
         self.values= np.random.random([20,40,30,10,pos_actions]); 
         self.values+= 100000
         epochs = 300
-        arr = []
-        average_returns = np.empty([20,40,30,10,pos_actions,0])
-        Q = np.empty([20,40,30,10,pos_actions,0])
+        average_returns = np.empty([20,40,30,10,pos_actions])
+        average_returns_count = np.zeros([20,40,30,10,pos_actions])
+        Q = np.empty([20,40,30,10,pos_actions])
 
         # --- Code snipped provided for guidance only --- #
         for n in range(epochs):
@@ -204,21 +204,29 @@ class CustomController(FlightController):
                 
                 cur_reward = self.value_function[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]]
 
-                if (cur_reward>rewards[k-i]):
-                    new_reward= (19*cur_reward + rewards[k-i])/20
-                else:
-                    new_reward= (1*cur_reward + rewards[k-i])/5
-                self.value_function[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] = new_reward
                 
-                G = G + rewards[k-1]
-                c = average_returns[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]]
-                c = np.append(c, G)
-                #print(c)
-                average_returns[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] = c
 
-                # np.average doesnt work how i expected it to so this part doesnt work yet
-                Q[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] = np.average(average_returns[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]])
-                print(Q[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]])
+                # if (cur_reward>rewards[k-i]):
+                #     new_reward = (19*cur_reward + rewards[k-i])/20
+                # else:
+                #     new_reward = (1*cur_reward + rewards[k-i])/5
+                # self.value_function[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] = new_reward
+
+                G = G + rewards[k-1]
+
+                average_returns[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] += G
+                average_returns_count[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] += 1
+
+                Q[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] = average_returns[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] / average_returns_count[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]]
+
+
+                self.value_function[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] = Q[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]]
+
+                
+                # print("Return " + str(i) + " " + str(average_returns[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]]))
+                # print("Count " + str(i) + " "  + str(average_returns_count[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]]))
+                # print("Average " + str(i) + " " + str(Q[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]]))
+            
 
         pass
         #self.graph()
