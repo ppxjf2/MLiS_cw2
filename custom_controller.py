@@ -3,6 +3,7 @@ from flight_controller import FlightController
 from drone import Drone
 from typing import Tuple
 from math import log, floor
+import matplotlib.pyplot as plt
 
 def sigmoid(x):
     return 1.0 / (1.0 + np.exp(-x))
@@ -75,17 +76,17 @@ class CustomController(FlightController):
         
         rotational_multiplier = clamp( -(drone.pitch_velocity/20)**2+1,0.1,1)
         multiplier =  angle_multiplier*angle_multiplier #*rotational_multiplier *velocity_multiplier
-        wrongwaypunish= np.sign(dx*drone.pitch)
-        wrongwaymulti= clamp(abs(drone.pitch),-1,0.05)
-        badboy= 25*floor(abs(drone.pitch))
+        wrongwaypunish = np.sign(dx*drone.pitch)
+        wrongwaymulti = clamp(abs(drone.pitch),-1,0.05)
+        angle_punishment = 25*floor(abs(drone.pitch))
         #print(drone.pitch)
-        reward = -3*(dist) + 0.1*abs(drone.velocity_x) - badboy + 2*self.counter**3 # + wrongwaymulti*wrongwaypunish*5
+        reward = -3*(dist) + 0.1*abs(drone.velocity_x) - angle_punishment + 2 * self.counter**3 # + wrongwaymulti*wrongwaypunish*5
         #print (multiplier)
         #print(ontarget)
-        if (self.nexttarget!=drone.get_next_target()):
-            self.nexttarget=drone.get_next_target()
-            self.counter+=1
-            reward+= 2000+multiplier
+        if (self.nexttarget != drone.get_next_target()):
+            self.nexttarget = drone.get_next_target()
+            self.counter += 1
+            reward += 2000 + multiplier
         return reward
 
     def action_selection(self, drone: Drone) -> Tuple[float, float]:
@@ -93,11 +94,7 @@ class CustomController(FlightController):
         dx = target_point[0] - drone.x
         dy = target_point[1] - drone.y
 
-
-
         if(self.action == 0):        
-            # Current
-            
             if (np.sign(dx) == np.sign(drone.pitch)):
                 thrust_left = 0.5
                 thrust_right = 0.5
@@ -144,10 +141,6 @@ class CustomController(FlightController):
         dx = target_point[0] - drone.x
         dy = target_point[1] - drone.y
 
-        thrust_adj = np.clip(dy * self.ky, -self.abs_thrust_delta, self.abs_thrust_delta)
-        target_pitch = np.clip(dx * self.kx, -self.abs_pitch_delta, self.abs_pitch_delta)
-        delta_pitch = target_pitch - drone.pitch
-        #print(drone.pitch)
         # State
         state = (
             int(((drone.pitch-1)*10)%20),
@@ -175,61 +168,70 @@ class CustomController(FlightController):
         self.values= np.random.random([20,40,30,10,pos_actions]); 
         self.values+= 100000
         epochs = 300
+        arr = []
+        average_returns = np.empty([20,40,30,10,pos_actions,0])
+        Q = np.empty([20,40,30,10,pos_actions,0])
+
         # --- Code snipped provided for guidance only --- #
         for n in range(epochs):
             # 1) modify parameters
-            
             self.states = []
             self.actions = []
             self.rewards = []
 
-
             # 2) create a new drone simulation
             drone = self.init_drone()
             self.nexttarget=drone.get_next_target()
-            self.counter=1
+            self.counter = 1
+
             # 3) run simulation
             for t in range(self.get_max_simulation_steps()):
-                #print(drone.pitch)
                 drone.set_thrust(self.get_thrusts(drone))
                 drone.step_simulation(self.get_time_interval())
-            #print(self.states)
+            
             states, actions, rewards = self.states, self.actions, self.rewards
 
             # 4) measure change in quality
             total_new_rewardsblip = np.sum(rewards)
             print(total_new_rewardsblip,self.counter)
-            # 5) update parameters according to algorithm
 
+            G = 0
+            # 5) update parameters according to algorithm
             for i in reversed(range(len(actions))):
                 k= len(actions)-1
                 total_new_rewardsblip
                 rewards[k-i] = (4*np.average(rewards[(k-i):])+total_new_rewardsblip)/5
-                # next_reward=total_new_rewards
-                # if (k-(i-2)<k):
-                #     next_reward = (1/4)*(3*rewards[k-i+1]+rewards[k-i+2])
-                # adjusted_new_rewards= (3*(next_reward)+total_new_rewards)/4
+                
                 cur_reward = self.value_function[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]]
-                # #print(states[i])
-                # new_reward = (5*cur_reward + (adjusted_new_rewards/len(rewards[k-i:])))/ 6
+
                 if (cur_reward>rewards[k-i]):
                     new_reward= (19*cur_reward + rewards[k-i])/20
                 else:
                     new_reward= (1*cur_reward + rewards[k-i])/5
                 self.value_function[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] = new_reward
-
-            # for i in range(len(actions)):
-            #     total_new_rewards= np.sum(rewards[i:])/len(rewards[i:])
-            #     next_reward=total_new_rewards
-            #     if (i+2<len(actions)):
-            #         next_reward = (1/4)*(3*rewards[i+1]+rewards[i+2])
-            #     adjusted_new_rewards= ((next_reward)+3*total_new_rewards)/4
-            #     cur_reward = self.value_function[states[i][0]][states[i][1]][states[i][2]][states[i][3]][actions[i]]
-            #     #print(states[i])
-            #     new_reward = (5*cur_reward + (adjusted_new_rewards/len(rewards[i:])))/ 6
                 
-            #     self.value_function[states[i][0]][states[i][1]][states[i][2]][states[i][3]][actions[i]] = new_reward
+                G = G + rewards[k-1]
+                c = average_returns[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]]
+                c = np.append(c, G)
+                #print(c)
+                average_returns[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] = c
+
+                # np.average doesnt work how i expected it to so this part doesnt work yet
+                Q[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]] = np.average(average_returns[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]])
+                print(Q[states[k-i][0]][states[k-i][1]][states[k-i][2]][states[k-i][3]][actions[k-i]])
+
         pass
+        #self.graph()
+
+    def graph():
+        # plt.figure()
+        # plt.plot(range(1+10,len(returns)+1-10), smoothed_returns[10:-10], "-", label="Sampled Mean Return", alpha=1)
+        # plt.plot([1, len(returns)+1], [max_return, max_return], '-.', label="Max Return")
+        # plt.legend(loc="lower right")
+        # plt.xlabel("Epochs")
+        # plt.ylabel("Avg Return")
+        # plt.show()
+        return
 
     def load(self):
         """Load the parameters of this flight controller from disk.
