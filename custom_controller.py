@@ -243,7 +243,7 @@ class CustomController(FlightController):
         variablename = {"total reward":total_rewards, "targets hit":total_targets}
         df = pd.DataFrame(variablename)
         now = datetime.now()
-        time = now.strftime("Drone-epochs{epochs} %d-%m-%Y_%H-%M-%S")
+        time = now.strftime("Drone-epochs {epochs} %d-%m-%Y_%H-%M-%S")
         df.to_csv(f'{time}.csv')
 
         plt.figure()
