@@ -37,7 +37,7 @@ class CustomController(FlightController):
         self.value_function = values
 
     def value_calc(self, state):
-        if (np.random.rand() > 0.995):
+        if (np.random.rand() > 0.99):
             return np.random.randint(pos_actions)
         else:   
             max1 = max(self.value_function[state[0]][state[1]][state[2]][state[3]])
@@ -176,6 +176,8 @@ class CustomController(FlightController):
         average_returns_count = np.zeros([20,40,30,10,pos_actions])
         Q = np.empty([20,40,30,10,pos_actions])
 
+        total_rewards = []
+
         # --- Code snipped provided for guidance only --- #
         for n in range(epochs):
             # 1) modify parameters
@@ -198,6 +200,7 @@ class CustomController(FlightController):
             # 4) measure change in quality
             total_new_rewardsblip = np.sum(rewards)
             print(total_new_rewardsblip,self.counter)
+            total_rewards.append(total_new_rewardsblip)
 
             G = 0
             # 5) update parameters according to algorithm
@@ -226,8 +229,12 @@ class CustomController(FlightController):
             
 
         pass
-        #self.graph()
-
+        plt.figure()
+        plt.plot(, label="Sampled Mean Return", alpha=1)
+        plt.xlabel("Epochs")
+        plt.ylabel("Avg Return")
+        plt.show()
+        
     def graph():
         # plt.figure()
         # plt.plot(range(1+10,len(returns)+1-10), smoothed_returns[10:-10], "-", label="Sampled Mean Return", alpha=1)
