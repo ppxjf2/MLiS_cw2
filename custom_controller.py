@@ -1,11 +1,14 @@
-import numpy as np
-from flight_controller import FlightController
-from drone import Drone
-from typing import Tuple
-from math import log, floor
-import matplotlib.pyplot as plt
-import pandas as pd
 import datetime
+from math import floor, log
+from typing import Tuple
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+from drone import Drone
+from flight_controller import FlightController
+
 
 def sigmoid(x):
     return 1.0 / (1.0 + np.exp(-x))
@@ -173,7 +176,7 @@ class CustomController(FlightController):
         """A self contained method designed to train parameters created in the initialiser."""
         self.values= np.random.random([20,40,30,10,pos_actions]); 
         self.values+= 100000
-        epochs = 5
+        epochs = 1
         average_returns = np.empty([20,40,30,10,pos_actions])
         average_returns_count = np.zeros([20,40,30,10,pos_actions])
         Q = np.empty([20,40,30,10,pos_actions])
@@ -234,12 +237,14 @@ class CustomController(FlightController):
 
         pass
 
+        from datetime import datetime
+        import csv
 
         variablename = {"total reward":total_rewards, "targets hit":total_targets}
         df = pd.DataFrame(variablename)
         now = datetime.now()
-        time = now.strftime("%d/%m/%Y %H:%M:%S")
-        df.to_csv(f"{time}")
+        time = now.strftime("Drone-epochs{epochs} %d-%m-%Y_%H-%M-%S")
+        df.to_csv(f'{time}.csv')
 
         plt.figure()
         plt.plot(total_rewards, label="Sampled Mean Return", alpha=1)
