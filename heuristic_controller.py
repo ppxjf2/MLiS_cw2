@@ -3,6 +3,16 @@ from flight_controller import FlightController
 from drone import Drone
 from typing import Tuple
 
+import datetime
+from math import floor, log
+from typing import Tuple
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+from drone import Drone
+
 class HeuristicController(FlightController):
 
 
@@ -15,11 +25,36 @@ class HeuristicController(FlightController):
         self.kx = 0.5
         self.abs_pitch_delta = 0.1
         self.abs_thrust_delta = 0.3
+        self.states = []
+        self.actions = []
+        self.rewards = []
+        self.action = 0
+        self.nexttarget = [0,0]
+        self.counter = 1
 
     def get_max_simulation_steps(self):
             return 3000 # You can alter the amount of steps you want your program to run for here
 
+    def reward(self, drone: Drone):
 
+        target_point = drone.get_next_target()
+        dx = target_point[0] - drone.x
+        dy = target_point[1] - drone.y
+
+#####################################################################
+        dist = np.sqrt(np.square(dx) + np.square(dy))
+        angle_punishment = 25*floor(abs(drone.pitch))
+
+        reward = -3*(dist) + 0.1*abs(drone.velocity_x) - angle_punishment + 2 * self.counter**3 
+
+
+        if (self.nexttarget != drone.get_next_target()):
+            self.nexttarget = drone.get_next_target()
+            self.counter += 1
+            reward += 2000 
+        return reward
+
+        
     def get_thrusts(self, drone: Drone) -> Tuple[float, float]:
         """Takes a given drone object, containing information about its current state
         and calculates a pair of thrust values for the left and right propellers.
@@ -44,6 +79,10 @@ class HeuristicController(FlightController):
         thrust_left = np.clip(0.5 + thrust_adj + delta_pitch, 0.0, 1.0)
         thrust_right = np.clip(0.5 + thrust_adj - delta_pitch, 0.0, 1.0)
 
+        # Reward
+        reward = self.reward(drone)
+        self.rewards.append(reward)
+
         # The default controller sets each propeller to a value of 0.5 0.5 to stay stationary.
         return (thrust_left, thrust_right)
 
@@ -51,7 +90,7 @@ class HeuristicController(FlightController):
         """A self contained method designed to train parameters created in the initialiser.
         """
         # --- Code snipped provided for guidance only --- #
-        for n in range(10):
+        for n in range(1):
             # 1) modify parameters
             
             # 2) create a new drone simulation
@@ -59,11 +98,16 @@ class HeuristicController(FlightController):
             # 3) run simulation
             
             for t in range(self.get_max_simulation_steps()):
-                print(drone.pitch)
+                #print(drone.pitch)
 
                 drone.set_thrust(self.get_thrusts(drone))
                 drone.step_simulation(self.get_time_interval())
             # 4) measure change in quality
+
+
+            total_new_rewardsblip = np.sum(self.rewards)
+            print(total_new_rewardsblip,self.counter)
+
 
             # 5) update parameters according to algorithm
 

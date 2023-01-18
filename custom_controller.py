@@ -36,7 +36,7 @@ class CustomController(FlightController):
         self.counter = 1
 
         values= np.random.random([20,40,30,10,pos_actions]); 
-        values+= 100000
+        #values+= 100000
         #actions = (np.array([1,-1,-2,-3,-4]))
         #values = [values,actions]
         self.value_function = values
@@ -104,10 +104,10 @@ class CustomController(FlightController):
         elif(self.action == 3):
             if (np.sign(drone.pitch_velocity)== np.sign(dx)):
                 thrust_left = np.clip(np.sign(dx), 0.4, 0.6)
-                thrust_right = np.clip(np.sign(dx), 0.4, 0.6)
+                thrust_right = np.clip(-np.sign(dx), 0.4, 0.6)
             else:
                 thrust_left = np.clip(np.sign(dx), 0.2, 0.8)
-                thrust_right = np.clip(np.sign(dx), 0.2, 0.8)
+                thrust_right = np.clip(-np.sign(dx), 0.2, 0.8)
 
         elif(self.action == 4):
             thrust_adj = np.clip(dy * self.ky, -self.abs_thrust_delta, self.abs_thrust_delta)
@@ -155,8 +155,8 @@ class CustomController(FlightController):
     def train(self):
         """A self contained method designed to train parameters created in the initialiser."""
         self.values= np.random.random([20,40,30,10,pos_actions]); 
-        self.values+= 100000
-        epochs = 2000
+        #self.values+= 100000
+        epochs = 5000
         average_returns = np.empty([20,40,30,10,pos_actions])
         average_returns_count = np.zeros([20,40,30,10,pos_actions])
         Q = np.empty([20,40,30,10,pos_actions])
@@ -185,7 +185,7 @@ class CustomController(FlightController):
 
             # 4) measure change in quality
             total_new_rewardsblip = np.sum(rewards)
-            print(total_new_rewardsblip,self.counter)
+            print(n, total_new_rewardsblip,self.counter)
             total_rewards.append(total_new_rewardsblip)
             total_targets.append(self.counter)
 
@@ -220,7 +220,7 @@ class CustomController(FlightController):
         from datetime import datetime
         import csv
 
-        variablename = {"total reward":total_rewards, "targets hit":total_targets}
+        variablename = {"total_reward":total_rewards, "targets_hit":total_targets}
         df = pd.DataFrame(variablename)
         now = datetime.now()
         time = now.strftime(f"Drone-epochs {epochs} %d-%m-%Y_%H-%M-%S")
