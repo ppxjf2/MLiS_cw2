@@ -10,7 +10,7 @@ def func(x, a, b, c):
     return a * np.log(b * x+1)  + c
 def func2(x, a, b, c):
     return a * math.log(b * x+1) + c
-def plot_results(df):
+def plot_results(df,epochs):
 
 
     plt.figure(dpi=100)
@@ -27,11 +27,11 @@ def plot_results(df):
     #model = np.poly1d(np.polyfit(x, df.logs, 1))
     print(a)
     print(b)
-    g=np.zeros(2000)
+    g=np.zeros(epochs)
     for i in range(len(g)):
         g[i]=func2(i+1,a[0],a[1],a[2])
 
-    p=range(4000)
+    p=range(epochs)
     #plt.scatter(x,g)
     plt.plot(p, func(p, *a),color="black")
     print(func2(10000,a[0],a[1],a[2]))
@@ -43,14 +43,13 @@ def plot_results(df):
     # plt.axhline(0.5, linewidth = 0.5, color = "red", linestyle = "dashed")
     # plt.axvline(value.x, linewidth= 0.5, color = "red", linestyle = "dashed")
     #plt.ylim([0,1200])
-    plt.xlim([0,4000])
+    plt.xlim([0,epochs])
     plt.show()
     return 1
 
 
+name= "Drone-epochs 1000 18-01-2023_19-14-44.csv"
+epochs= 1000
 
-
-
-name= "Drone-epochs 2000 18-01-2023_15-38-38.csv"
 df = pd.read_csv(f'{name}', sep=',', index_col=False)    
-value= plot_results(df)
+value= plot_results(df,epochs)
