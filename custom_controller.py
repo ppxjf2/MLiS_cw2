@@ -61,39 +61,19 @@ class CustomController(FlightController):
         dx = target_point[0] - drone.x
         dy = target_point[1] - drone.y
 
+#####################################################################
         dist = np.sqrt(np.square(dx) + np.square(dy))
-        velocity = np.sqrt(np.square(drone.velocity_x) + np.square(drone.velocity_y))
-
-        if (dist<self.h1):
-            ontarget= True
-        else:
-            ontarget = False
-
-        if abs(drone.velocity_x) < 0.1 :
-            velocity_multiplier = 0
-        else:
-            velocity_multiplier= clamp(-2*(velocity-0.1)**2+1 ,0.3,1)
-
-        if drone.pitch == 0:
-            angle_multiplier = 0.2
-        else:
-            angle_multiplier= clamp(-0.8*log(abs(drone.pitch)) ,0.1,1)
-        
-        #rotational_multiplier = clamp( -(drone.pitch_velocity/20)**2+1,0.1,1)
-        multiplier =  angle_multiplier*angle_multiplier * velocity_multiplier
-        wrongwaypunish = np.sign(dx*drone.pitch)
-        wrongwaymulti = clamp(abs(drone.pitch),0,1)
         angle_punishment = 25*floor(abs(drone.pitch))
-        #print(drone.pitch)
-        reward = -3*(dist) + 0.1*abs(drone.velocity_x) - angle_punishment + 2 * self.counter**3 # - wrongwaymulti*wrongwaypunish
-        #print (multiplier)
-        #print(ontarget)
+
+        reward = -3*(dist) + 0.1*abs(drone.velocity_x) - angle_punishment + 2 * self.counter**3 
+
+
         if (self.nexttarget != drone.get_next_target()):
             self.nexttarget = drone.get_next_target()
             self.counter += 1
-            reward += 2000 #+ #500*multiplier
+            reward += 2000 
         return reward
-
+########################################################################
     def action_selection(self, drone: Drone) -> Tuple[float, float]:
         target_point = drone.get_next_target()
         dx = target_point[0] - drone.x
@@ -176,7 +156,7 @@ class CustomController(FlightController):
         """A self contained method designed to train parameters created in the initialiser."""
         self.values= np.random.random([20,40,30,10,pos_actions]); 
         self.values+= 100000
-        epochs = 1
+        epochs = 2000
         average_returns = np.empty([20,40,30,10,pos_actions])
         average_returns_count = np.zeros([20,40,30,10,pos_actions])
         Q = np.empty([20,40,30,10,pos_actions])
@@ -243,7 +223,7 @@ class CustomController(FlightController):
         variablename = {"total reward":total_rewards, "targets hit":total_targets}
         df = pd.DataFrame(variablename)
         now = datetime.now()
-        time = now.strftime("Drone-epochs {epochs} %d-%m-%Y_%H-%M-%S")
+        time = now.strftime(f"Drone-epochs {epochs} %d-%m-%Y_%H-%M-%S")
         df.to_csv(f'{time}.csv')
 
         plt.figure()
