@@ -34,22 +34,28 @@ def plot_results(df,epochs):
     p=range(epochs)
     #plt.scatter(x,g)
     plt.plot(p, func(p, *a),color="black")
-    print(func2(10000,a[0],a[1],a[2]))
-    
 
-    #plt.plot(polyline, model(polyline),color="black", label='3 degree polynomial model', linewidth= 0.5)
-    # model-= 0.5
-    # value = optimize.root(model,0.5)
-    # plt.axhline(0.5, linewidth = 0.5, color = "red", linestyle = "dashed")
-    # plt.axvline(value.x, linewidth= 0.5, color = "red", linestyle = "dashed")
-    #plt.ylim([0,1200])
+    #estimated value after 5000 epochs
+    print(func2(10000,a[0],a[1],a[2]))
+    #plot heuristic value
+    plt.axhline(4894.424, linewidth= 0.5, color = "red", linestyle = "dashed")
+
     plt.xlim([0,epochs])
     plt.show()
     return 1
-
-
-name= "Drone-epochs 1000 18-01-2023_19-14-44.csv"
-epochs= 1000
+    
+    
+    
+name= "Drone-epochs 5000 18-01-2023_22-03-43.csv"
+epochs= 5000
 
 df = pd.read_csv(f'{name}', sep=',', index_col=False)    
 value= plot_results(df,epochs)
+
+
+
+#         \frac{(-3a+0.1b-c+2d^3)}{100}
+# a=\left \| Target Distance \right \|
+# b=abs(Drone Velocity)
+# c= \left \lfloor abs(DronePitch)  \right \rfloor 
+# d=1+TargetsHit
