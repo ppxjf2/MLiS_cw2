@@ -46,7 +46,7 @@ def plot_results(df,epochs):
     
     
     
-name= "Drone-epochs 5000 18-01-2023_22-03-43.csv"
+name= "Drone-epochs 5000 19-01-2023_00-31-52.csv"
 epochs= 5000
 
 df = pd.read_csv(f'{name}', sep=',', index_col=False)    
