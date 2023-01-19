@@ -39,7 +39,7 @@ def plot_results(df,epochs):
     print(func2(10000,a[0],a[1],a[2]))
     #plot heuristic value
     plt.axhline(4894.424, linewidth= 0.5, color = "red", linestyle = "dashed", label="Heuristic Result")
-    plt.axvline(2575, linewidth= 0.5, color = "red", linestyle = "dashed", label="")
+    plt.axvline(2595.20949003, linewidth= 0.5, color = "blue", linestyle = "dashed", label="Intersection")
 
     plt.legend(loc="upper left")
     plt.xlim([0,epochs])
