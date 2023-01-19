@@ -33,25 +33,49 @@ def plot_results(df,epochs):
 
     p=range(epochs)
     #plt.scatter(x,g)
-    plt.plot(p, func(p, *a),color="black")
+    plt.plot(p, func(p, *a),color="black", label="Reinforcement Learning")
 
     #estimated value after 5000 epochs
     print(func2(10000,a[0],a[1],a[2]))
     #plot heuristic value
-    plt.axhline(4894.424, linewidth= 0.5, color = "red", linestyle = "dashed")
+    plt.axhline(4894.424, linewidth= 0.5, color = "red", linestyle = "dashed", label="Heuristic Result")
+    plt.axvline(2575, linewidth= 0.5, color = "red", linestyle = "dashed", label="")
 
+    plt.legend(loc="upper left")
     plt.xlim([0,epochs])
-    plt.show()
+    
+    #plt.show()
     return 1
     
     
     
+name = "Drone-epochs 5000 18-01-2023_21-11-20.csv"
+df1 = pd.read_csv(f'{name}', sep=',', index_col=False)
+
+name= "Drone-epochs 5000 18-01-2023_22-00-08.csv"
+df2 = pd.read_csv(f'{name}', sep=',', index_col=False) * 100
+
+name= "Drone-epochs 5000 18-01-2023_22-03-43.csv"
+df3 = pd.read_csv(f'{name}', sep=',', index_col=False)  
+
+name= "Drone-epochs 5000 18-01-2023_23-23-23.csv"
+df4 = pd.read_csv(f'{name}', sep=',', index_col=False)  
+
 name= "Drone-epochs 5000 19-01-2023_00-01-37.csv"
-epochs= 5000
+df5 = pd.read_csv(f'{name}', sep=',', index_col=False)  
 
-df = pd.read_csv(f'{name}', sep=',', index_col=False)    
-value= plot_results(df,epochs)
+name= "Drone-epochs 5000 19-01-2023_00-31-52.csv"
+df6 = pd.read_csv(f'{name}', sep=',', index_col=False)  
 
+
+
+epochs= 5000 
+
+df = (df1 + df3 + df4 + df5 + df6) / 5
+
+plot_results(df,epochs)
+
+plt.show()
 
 
 #         \frac{(-3a+0.1b-c+2d^3)}{100}
